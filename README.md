@@ -8,10 +8,10 @@ Three compact open-weight models cooperate on [LangGraph](https://github.com/lan
 document
   │
   ├─ prepare     split into chunks of ≤3 sentences
-  ├─ match       DETERMINISTIC matcher: which glossary entries occur here?
+  ├─ match       DETERMINISTIC matcher: glossary entries occurrences
   ├─ select      TERMINOLOGY AGENT  (Qwen3-4B, reasoning)   prune · recover · disambiguate
   ├─ translate   TRANSLATOR         (Latxa-8B, fine-tuned)  chunk by chunk
-  ├─ verify      EDITOR             (Latxa-8B)              terminology + declension repair
+  ├─ verify      EDITOR             (Latxa-8B, base)        terminology + declension repair
   ├─ format      deterministic capitalisation / punctuation repair
   └─ finalize    rebuild the document, run report-only diagnostics
 ```
@@ -141,28 +141,6 @@ In `noterm` and `base_noterm` the matcher, the terminology agent and the term bl
 
 ---
 
-## How the terminology agent works
-
-The matcher (`terminology.py`) is arithmetic, not a model: a glossary entry is present when every content token occurs **in order**, with only function words between them, and each token differs from the glossary form by at most a Spanish plural or gender ending. It is deliberately high-recall, and it makes two kinds of mistake the agent then fixes.
-
-**False positives.** The words of a term co-occur inside a different noun phrase:
-
-> *La **bomba de aceite** movida por el **motor**…*
-
-`aceite de motor` is not used here, but its words are all present. (With the default `--term-max-gap 0` the matcher already rejects this one; raise the gap and it does not.)
-
-**False negatives.** The mention is coordinated or reordered, so the tokens are not contiguous:
-
-> *sistemas de frenado y de refrigeración*
-
-`sistema de refrigeración` is genuinely used but never appears as a run. These are offered to the agent as *possible* entries — glossary entries sharing at least one content word with the chunk — and only a model reading the sentence can decide.
-
-**Ambiguity.** Where an entry lists several approved targets, the agent picks one for this context.
-
-The agent returns JSON. It is **reconciled** before use (`agents.py`): it may only return entries it was offered, and only targets that are approved. An invented term is dropped; an unapproved target falls back to the first approved one. An unparseable reply keeps the matcher's output, so a bad response degrades to the deterministic baseline rather than losing terminology.
-
-Turn it off with `--no-term-agent` to run the matcher alone — faster, and a useful ablation.
-
 ### Few-shot examples
 
 `prompts.py` carries three worked examples, one per decision type (reject / recover / disambiguate).
@@ -173,29 +151,27 @@ Turn it off with `--no-term-agent` to run the matcher alone — faster, and a us
 
 ## Prompts: what you may and may not edit
 
-| Prompt | Status |
-|---|---|
-| Translator system prompt | 🔒 **frozen** — reproduces the fine-tuning data |
-| Editor system + user prompts | 🔒 **frozen** — reproduces the fine-tuning data |
-| Terminology agent prompt + few-shots | ✅ editable — that model is used zero-shot |
-
-The frozen prompts include unaccented spellings in the editor's scaffolding (`declinacion`, `anadidos`). These are not typos to be tidied: the domain conditioning the fine-tune bought fires on these exact strings, and normalising them costs you the adaptation. The same applies to the `Ámbito:` line and the domain strings in `config.py`.
+| Prompt | Model | Status |
+|---|---|---|
+| Translator system prompt | fine-tuned Latxa-8B | 🔒 **frozen** — reproduces the fine-tuning data |
+| Editor system + user prompts | **base** Latxa-8B-Instruct | ✅ editable — prompted zero-shot |
+| Terminology agent prompt | Qwen3-4B | ✅ editable — prompted zero-shot |
 
 ---
 
 ## Hardware
 
-The profile is detected at startup and sets 4-bit loading, generation budgets, and how many 8B models stay resident.
+| Profile | VRAM | 4-bit | Resident 8B | Typical cards |
+|---|---|---|---|---|
+| `cuda_80` | ≥70GB | no | 2 | A100 80GB, H100 |
+| `cuda_40` | ≥38GB | yes | 2 | A100 40GB, A6000 |
+| `cuda_24` | ≥20GB | yes | 1 | RTX 3090 / 4090, L4, A5000 |
+| `cuda_16` | ≥14GB | yes | 1 | T4, RTX 4080, V100 16GB |
+| `cuda_small` | <14GB | yes | 1 | RTX 3060 12GB, 4060 8GB — warns |
+| `mps` | — | no | 1 | Apple Silicon — warns |
+| `cpu` | — | no | 1 | no GPU — warns |
 
-| GPU | 4-bit | Resident 8B | Notes |
-|---|---|---|---|
-| A100 80GB | no | 2 | fastest; no reload between stages |
-| A100 40GB | yes | 2 | |
-| L4 / 24GB | yes | 1 | one 8B reload per stage per document |
-| T4 16GB | yes | 1 | works but more slowly |
-| CPU | — | 1 | for testing only |
-
-Override with `--4bit` / `--no-4bit`.
+With one resident 8B model, the translator and editor swap in and out once per stage per document. 
 
 ---
 
@@ -277,6 +253,7 @@ Runs are seeded (`--seed`, default 42, offset per document), but generation is s
 ---
 
 ## Citation
+
 
 ```bibtex
 
