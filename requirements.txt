@@ -1,6 +1,7 @@
 # Core
 torch>=2.1
 transformers>=4.51
+huggingface_hub>=0.34 
 accelerate>=0.30
 langgraph>=0.2
 sentencepiece
