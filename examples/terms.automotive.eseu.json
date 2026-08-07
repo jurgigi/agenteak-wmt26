@@ -1,0 +1,22 @@
+{
+  "proper": {
+    "motor de combustión interna": ["barne-errekuntzako motor"],
+    "energía mecánica": ["energia mekaniko"],
+    "bomba de aceite": ["olio-ponpa"],
+    "aceite de motor": ["motor-olio"],
+    "sistema de frenado": ["balaztatze-sistema"],
+    "sistema de refrigeración": ["hozte-sistema"],
+    "batería": ["bateria", "pila"],
+    "sistema de arranque": ["abiarazte-sistema"]
+  },
+  "random": {
+    "motor de combustión interna": ["mahai"],
+    "energía mecánica": ["itsaso"],
+    "bomba de aceite": ["liburu"],
+    "aceite de motor": ["hodei"],
+    "sistema de frenado": ["zuhaitz"],
+    "sistema de refrigeración": ["harri"],
+    "batería": ["leiho"],
+    "sistema de arranque": ["ate"]
+  }
+}
