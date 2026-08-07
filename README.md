@@ -41,9 +41,8 @@ The models are pulled from the Hugging Face Hub on first run:
 Latxa is gated under the Llama 3.1 licence, so accept the terms on the Hub and log in first:
 
 ```bash
-huggingface-cli login
+hf auth login
 ```
-
 ---
 
 ## Quick start
