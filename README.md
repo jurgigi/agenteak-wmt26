@@ -197,14 +197,6 @@ The profile is detected at startup and sets 4-bit loading, generation budgets, a
 
 Override with `--4bit` / `--no-4bit`.
 
-If both fine-tunes are published as LoRA adapters, both 8B roles can be served from **one** resident base model with an adapter switch instead of a reload:
-
-```bash
-python -m agenteak ... \
-    --translator-adapter jurgiraud/latxa-eseu-wmt26-augmented-lora \
-    --editor-adapter     jurgiraud/latxa-editor-wmt26-lora
-```
-
 ---
 
 ## Output
