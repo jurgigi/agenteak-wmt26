@@ -192,7 +192,7 @@ The profile is detected at startup and sets 4-bit loading, generation budgets, a
 | A100 80GB | no | 2 | fastest; no reload between stages |
 | A100 40GB | yes | 2 | |
 | L4 / 24GB | yes | 1 | one 8B reload per stage per document |
-| T4 16GB | yes | 1 | works |
+| T4 16GB | yes | 1 | works but more slowly |
 | CPU | — | 1 | for testing only |
 
 Override with `--4bit` / `--no-4bit`.
