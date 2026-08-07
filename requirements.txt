@@ -1,0 +1,13 @@
+# Core
+torch>=2.1
+transformers>=4.51
+accelerate>=0.30
+langgraph>=0.2
+sentencepiece
+protobuf
+
+# 4-bit loading (needed on <40GB cards; optional on A100 80GB with --no-4bit)
+bitsandbytes>=0.43
+
+# Only needed if you point --translator-adapter / --editor-adapter at LoRA repos
+peft>=0.11
