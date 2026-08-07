@@ -167,7 +167,7 @@ Turn it off with `--no-term-agent` to run the matcher alone — faster, and a us
 
 `prompts.py` carries three worked examples, one per decision type (reject / recover / disambiguate).
 
-> ⚠️ **The Basque in these examples is illustrative.** It shows the agent the *shape* of each decision, not specific terminology. Before a submission run, have a Basque speaker check them or replace them with pairs from your own glossary — a wrong example is applied silently to every chunk.
+> ⚠️ **The Basque in these examples is illustrative.** It shows the agent the *shape* of each decision, not specific terminology.
 
 ---
 
