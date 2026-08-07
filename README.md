@@ -23,7 +23,7 @@ Terminology is handled as a **soft** constraint. Basque is agglutinative: a glos
 ## Install
 
 ```bash
-git clone https://github.com/<you>/agenteak-wmt26.git
+git clone https://github.com/jurgigi/agenteak-wmt26.git
 cd agenteak-wmt26
 pip install -r requirements.txt
 ```
