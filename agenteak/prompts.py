@@ -1,13 +1,14 @@
 """Prompts for the three agents.
 
-TWO OF THESE ARE FROZEN. The translator and editor prompts are reproduced
-CHARACTER FOR CHARACTER from the fine-tuning data, including the unaccented
-spellings in the editor's scaffolding. They are not style choices and must not
-be tidied: the conditioning the fine-tune bought fires on these exact strings.
+ONE OF THESE IS FROZEN. The translator prompt is reproduced CHARACTER FOR
+CHARACTER from the fine-tuning data; it is not a style choice and must not be
+tidied, because the conditioning the fine-tune bought fires on that exact
+string.
 
-The terminology agent's prompt is NOT frozen — that model is used zero-shot, so
-its prompt and few-shot examples are ordinary engineering and can be edited,
-extended, or replaced per domain.
+The editor and terminology agent prompts are ordinary engineering. Both roles
+are served by UN-FINE-TUNED models — base Latxa-8B-Instruct and Qwen3-4B — so
+their prompts and few-shot examples can be edited, extended, or replaced per
+domain. Only the translator carries adapters.
 
     >>> NOTE ON THE FEW-SHOT EXAMPLES <<<
     The Basque in FEWSHOT_* below is illustrative. It is intended to show the
@@ -55,12 +56,17 @@ def translator_system_prompt(domain: str) -> str:
 
 
 # ===========================================================================
-# Agent 3 — editor / verifier  (FROZEN: matches the fine-tuning data)
+# Agent 3 — editor / verifier  (NOT frozen: base Latxa-8B-Instruct, zero-shot)
 # ===========================================================================
 
 
 def editor_system_prompt(domain: str, with_terms: bool) -> str:
-    """Exactly the system prompt the editor was trained with.
+    """System prompt for the editor.
+
+    The wording is inherited from an earlier fine-tuned editor that was not used
+    in the end, which is why the scaffolding is unaccented (`declinacion`,
+    `anadidos`). That is a harmless inheritance, not a requirement: the editor is
+    the base instruct model, so this prompt may be edited freely.
 
     The no-terminology variant drops clause (1) and the approved-term mention
     and changes nothing else: in noterm mode the pipeline must not carry any
@@ -108,15 +114,18 @@ def editor_user_prompt(source: str, draft: str, present: dict) -> str:
 # ---------------------------------------------------------------------------
 # Editor few-shot examples
 # ---------------------------------------------------------------------------
-# The editor is fine-tuned, so it does NOT need few-shot examples and none are
-# used by default (few_shot=False in nodes.verify_node). They are provided for
-# two cases: running the pipeline with an un-fine-tuned editor, and diagnosing
-# whether a failure is a prompt problem or a weights problem.
+# The editor is an un-fine-tuned model, so these carry real weight and are used
+# by default. Each example is (user_turn, assistant_turn), and the three cover
+# the failure modes observed on this corpus: a term present but in citation form
+# where the syntax needs a case ending; a term absent from the draft entirely;
+# and a draft that is already correct and must be returned untouched — the last
+# matters most, since an idle editor that rewrites anyway is the expensive
+# failure.
 #
-# Each example is (user_turn, assistant_turn). The three cover the failure modes
-# actually observed on this corpus: a term present but in citation form where
-# the syntax needs a case ending; a term absent from the draft entirely; and a
-# draft that is already correct and must be returned untouched.
+# They are skipped in noterm mode, where a prompt showing approved-term blocks
+# would be off-distribution for the task actually being asked.
+#
+# The Basque here is illustrative; see the note at the top of this file.
 
 FEWSHOT_EDITOR = [
     (
@@ -153,6 +162,19 @@ FEWSHOT_EDITOR = [
         "Energia berriztagarriek ekoizpenaren zati gero eta handiagoa dira."
     ),
 ]
+
+
+def editor_messages(domain: str, with_terms: bool, source: str, draft: str,
+                    present: dict, few_shot: bool = True) -> list:
+    """Full message list for the editor."""
+    msgs = [{"role": "system", "content": editor_system_prompt(domain, with_terms)}]
+    if few_shot and with_terms:
+        for user, assistant in FEWSHOT_EDITOR:
+            msgs.append({"role": "user", "content": user})
+            msgs.append({"role": "assistant", "content": assistant})
+    msgs.append({"role": "user",
+                 "content": editor_user_prompt(source, draft, present)})
+    return msgs
 
 
 # ===========================================================================
